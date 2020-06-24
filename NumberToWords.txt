@@ -1,0 +1,155 @@
+﻿  <xsl:call-template name="NumberToWords">
+    <xsl:with-param name="number" select="//n1:Invoice/cac:LegalMonetaryTotal/cbc:PayableAmount"/>
+    <xsl:with-param name="currency" select="//n1:Invoice/cbc:DocumentCurrencyCode"/>
+  </xsl:call-template>
+
+  <xsl:template name="NumberToWords">
+    <xsl:param name="number"/>
+    <xsl:param name="currency"/>
+    <xsl:variable name="numberstring" select="string($number)"/>
+    <xsl:choose>
+      <xsl:when test="$currency">
+        <xsl:if test="(contains($numberstring,'.') and number(substring-before($numberstring,'.'))&gt;0) or (not(contains($numberstring,'.')) and number($numberstring)&gt;0)">
+          <xsl:call-template name="NumberToWords">
+            <xsl:with-param name="number">
+              <xsl:choose>
+                <xsl:when test="contains($numberstring,'.')">
+                  <xsl:value-of select="substring-before($numberstring,'.')"/>
+                </xsl:when>
+                <xsl:otherwise>
+                  <xsl:value-of select="$numberstring"/>
+                </xsl:otherwise>
+              </xsl:choose>
+            </xsl:with-param>
+          </xsl:call-template>
+          <xsl:choose>
+            <xsl:when test="$currency='TRY' or $currency='TRL' or $currency='TL'">&#160;TL</xsl:when>
+            <xsl:otherwise>
+              <xsl:value-of select="concat('&#160;',$currency)"/>
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:if>
+        <xsl:if test="number(substring-after($numberstring,'.'))&gt;0">
+          <xsl:text>&#160;</xsl:text>
+          <xsl:call-template name="NumberToWords">
+            <xsl:with-param name="number" select="substring(concat(substring-after($numberstring,'.'),'0'),1,2)"/>
+          </xsl:call-template>
+          <xsl:choose>
+            <xsl:when test="$currency='TRY' or $currency='TRL' or $currency='TL'">&#160;Krş</xsl:when>
+            <xsl:when test="$currency='USD'">&#160;Cent</xsl:when>
+            <xsl:when test="$currency='EUR'">&#160;EuroCent</xsl:when>
+            <xsl:otherwise>
+              <xsl:value-of select="concat('&#160;1/100&#160;',$currency)"/>
+            </xsl:otherwise>
+          </xsl:choose>
+        </xsl:if>
+      </xsl:when>
+      <xsl:when test="substring($numberstring,1,1)='.'">
+        <xsl:if test="substring($numberstring,2,1)='0'">Sıfır</xsl:if>
+        <xsl:call-template name="NumberToWords">
+          <xsl:with-param name="number">
+            <xsl:choose>
+              <xsl:when test="number(substring($numberstring,2,1))=0">
+                <xsl:value-of select="concat(substring($numberstring,1,1),substring($numberstring,3))"/>
+              </xsl:when>
+              <xsl:when test="number(substring($numberstring,string-length($numberstring)))=0">
+                <xsl:value-of select="substring($numberstring,1,string-length($numberstring)-1)"/>
+              </xsl:when>
+              <xsl:otherwise>
+                <xsl:value-of select="substring($numberstring,2)"/>
+              </xsl:otherwise>
+            </xsl:choose>
+          </xsl:with-param>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:when test="contains($numberstring,'.') and number(substring-after($numberstring,'.'))&gt;0">
+        <xsl:if test="number(substring-before($numberstring,'.'))=0">Sıfır</xsl:if>
+        <xsl:call-template name="NumberToWords">
+          <xsl:with-param name="number" select="substring-before($numberstring,'.')"/>
+        </xsl:call-template>
+        <xsl:text>&#160;Virgül&#160;</xsl:text>
+        <xsl:call-template name="NumberToWords">
+          <xsl:with-param name="number" select="substring-after($numberstring,'.')"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:when test="contains($numberstring,'.')">
+        <xsl:call-template name="NumberToWords">
+          <xsl:with-param name="number" select="substring-before($numberstring,'.')"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:when test="$numberstring='1'">Bir</xsl:when>
+      <xsl:when test="$numberstring='2'">İki</xsl:when>
+      <xsl:when test="$numberstring='3'">Üç</xsl:when>
+      <xsl:when test="$numberstring='4'">Dört</xsl:when>
+      <xsl:when test="$numberstring='5'">Beş</xsl:when>
+      <xsl:when test="$numberstring='6'">Altı</xsl:when>
+      <xsl:when test="$numberstring='7'">Yedi</xsl:when>
+      <xsl:when test="$numberstring='8'">Sekiz</xsl:when>
+      <xsl:when test="$numberstring='9'">Dokuz</xsl:when>
+      <xsl:when test="string-length($numberstring)=2">
+        <xsl:choose>
+          <xsl:when test="substring($numberstring,1,1)='1'">On</xsl:when>
+          <xsl:when test="substring($numberstring,1,1)='2'">Yirmi</xsl:when>
+          <xsl:when test="substring($numberstring,1,1)='3'">Otuz</xsl:when>
+          <xsl:when test="substring($numberstring,1,1)='4'">Kırk</xsl:when>
+          <xsl:when test="substring($numberstring,1,1)='5'">Elli</xsl:when>
+          <xsl:when test="substring($numberstring,1,1)='6'">Altmış</xsl:when>
+          <xsl:when test="substring($numberstring,1,1)='7'">Yetmiş</xsl:when>
+          <xsl:when test="substring($numberstring,1,1)='8'">Seksen</xsl:when>
+          <xsl:when test="substring($numberstring,1,1)='9'">Doksan</xsl:when>
+        </xsl:choose>
+        <xsl:call-template name="NumberToWords">
+          <xsl:with-param name="number" select="substring($numberstring,2,1)"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:when test="string-length($numberstring)=3">
+        <xsl:if test="number(substring($numberstring,1,1))&gt;0">
+          <xsl:if test="number(substring($numberstring,1,1))&gt;1">
+            <xsl:call-template name="NumberToWords">
+              <xsl:with-param name="number" select="substring($numberstring,1,1)"/>
+            </xsl:call-template>
+          </xsl:if>
+          <xsl:text>Yüz</xsl:text>
+        </xsl:if>
+        <xsl:call-template name="NumberToWords">
+          <xsl:with-param name="number" select="substring($numberstring,2,2)"/>
+        </xsl:call-template>
+      </xsl:when>
+      <xsl:when test="string-length($numberstring)&gt;3">
+        <xsl:if test="number(substring($numberstring,1,1+(((string-length($numberstring)+2) div 3)*3)-(floor((string-length($numberstring)+2) div 3)*3)))&gt;0">
+          <xsl:if test="string-length($numberstring)&gt;6 or number(substring($numberstring,1,1+(((string-length($numberstring)+2) div 3)*3)-(floor((string-length($numberstring)+2) div 3)*3)))&gt;1">
+            <xsl:call-template name="NumberToWords">
+              <xsl:with-param name="number" select="substring($numberstring,1,1+(((string-length($numberstring)+2) div 3)*3)-(floor((string-length($numberstring)+2) div 3)*3))"/>
+            </xsl:call-template>
+          </xsl:if>
+          <xsl:choose>
+            <xsl:when test="string-length($numberstring)&gt;66">...</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;63">Vigintilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;60">Novemdesilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;57">Oktodesilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;54">Septendesilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;51">Seksdesilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;48">Kendesilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;45">Katordesilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;42">Tredesilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;39">Dodesilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;36">Undesilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;33">Desilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;30">Nonilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;27">Oktilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;24">Septilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;21">Seksilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;18">Kentilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;15">Katrilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;12">Trilyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;9">Milyar</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;6">Milyon</xsl:when>
+            <xsl:when test="string-length($numberstring)&gt;3">Bin</xsl:when>
+          </xsl:choose>
+        </xsl:if>
+        <xsl:call-template name="NumberToWords">
+          <xsl:with-param name="number" select="substring($numberstring,2+(((string-length($numberstring)+2) div 3)*3)-(floor((string-length($numberstring)+2) div 3)*3))"/>
+        </xsl:call-template>
+      </xsl:when>
+    </xsl:choose>
+  </xsl:template>
